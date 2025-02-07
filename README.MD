@@ -1,8 +1,5 @@
 # Web Framework for REST Services and Static File Management
 
-## Overview
-This project enhances an existing web server by converting it into a lightweight web framework for Java. The framework allows developers to create REST services using lambda functions, manage query parameters, and serve static files easily.
-
 ## Features
 1. **GET Method for REST Services**
    - Define REST services using lambda functions.
@@ -72,11 +69,6 @@ This project enhances an existing web server by converting it into a lightweight
    mvn clean package
    ```
 
-3. **Run the server:**
-   ```sh
-   java -jar target/web-framework.jar
-   ```
-
 ### Example Usage
 ```java
 public static void main(String[] args) {
@@ -101,10 +93,34 @@ public static void main(String[] args) {
    ```sh
    curl http://localhost:8080/index.html
    ```
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>My Java Web Framework</title>
+          <link rel="stylesheet" href="styles.css">
+      </head>
+      <body>
+      <h1>Welcome to My Web Framework</h1>
+      <p>This is a simple static page served by our Java web framework.</p>
+      
+      <button onclick="fetchHello()">Say Hello</button>
+      <p id="helloMessage"></p>
+      
+      <button onclick="fetchPi()">Get PI</button>
+      <p id="piValue"></p>
+      
+      <script src="script.js"></script>
+      </body>
+      </html>
+
 
 ### Using a Web Browser
-- Open `http://localhost:8080/index.html` to test static file serving.
+- Open `http://localhost:8080/random` to test static file serving.
+      Random Number: [#]
 - Try `http://localhost:8080/hello?name=Pedro` to test REST endpoints.
+      HelloPedro
 
 ## Project Structure
 ```
@@ -117,15 +133,13 @@ web-framework/
 │   │   ├── Response.java
 │   ├── resources/webroot/
 │       ├── index.html
+│       ├── styles.css
+│       ├── script.js
+│   ├── resources/webroot/images/
+│       ├── background.png
+│       ├── logo.png
 ├── pom.xml
 ├── README.md
 ```
 
-## Future Enhancements
-- Support for additional HTTP methods (PUT, DELETE).
-- Middleware support for authentication and logging.
-- JSON parsing for structured request bodies.
-
-## License
-This project is licensed under the MIT License.
-
+## Daniel Alejandro Acero
