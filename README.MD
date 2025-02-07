@@ -121,6 +121,9 @@ public static void main(String[] args) {
       Random Number: [#]
 - Try `http://localhost:8080/hello?name=Pedro` to test REST endpoints.
       HelloPedro
+- Try http://localhost:8080/convert?celsius=25 tot test /convert.
+      Temperature in Fahrenheit: 77.0
+
 
 ## Project Structure
 ```
