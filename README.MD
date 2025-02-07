@@ -74,7 +74,7 @@
    mvn clean package
    ```
 
-   - Example: http://localhost:8080/convert?celsius=25 to test /convert:
+   - Example: http://localhost:8080/**convert?celsius=25** to test /convert:
       Temperature in Fahrenheit: 77.0
 
 ### Example Usage
