@@ -69,6 +69,14 @@
    mvn clean package
    ```
 
+3. **Run HttpService.class, and go to http://localhost:8080/[resource]:**
+   ```sh
+   mvn clean package
+   ```
+
+   - Example: http://localhost:8080/convert?celsius=25 to test /convert:
+      Temperature in Fahrenheit: 77.0
+
 ### Example Usage
 ```java
 public static void main(String[] args) {
@@ -121,8 +129,6 @@ public static void main(String[] args) {
       Random Number: [#]
 - Try `http://localhost:8080/hello?name=Pedro` to test REST endpoints.
       HelloPedro
-- Try http://localhost:8080/convert?celsius=25 tot test /convert.
-      Temperature in Fahrenheit: 77.0
 
 
 ## Project Structure
