@@ -93,10 +93,26 @@ public static void main(String[] args) {
    ```sh
    curl http://localhost:8080/hello?name=Pedro
    ```
-2. **POST Request:**
+2. **POST Request (PowerShell):**
    ```sh
-   curl -X POST -d "sample data" http://localhost:8080/submit
+   Invoke-WebRequest -Uri "http://localhost:8080/submit" -Method POST -Body "Hello, Server!" -Headers @{ "Content-Type" = "text/plain" }
    ```
+
+         StatusCode        : 200
+      StatusDescription : Ok
+      Content           : {"message": "Data received", "data": "Hello, Server!"}
+      RawContent        : HTTP/1.1 200 Ok
+                          Content-Type: application/json
+      
+                          {"message": "Data received", "data": "Hello, Server!"}
+      Forms             : {}
+      Headers           : {[Content-Type, application/json]}
+      Images            : {}
+      InputFields       : {}
+      Links             : {}
+      ParsedHtml        : mshtml.HTMLDocumentClass
+      RawContentLength  : 54
+
 3. **Static File Request:**
    ```sh
    curl http://localhost:8080/index.html
