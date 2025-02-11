@@ -98,6 +98,7 @@ public static void main(String[] args) {
    Invoke-WebRequest -Uri "http://localhost:8080/submit" -Method POST -Body "Hello, Server!" -Headers @{ "Content-Type" = "text/plain" }
    ```
 
+   ```
          StatusCode        : 200
       StatusDescription : Ok
       Content           : {"message": "Data received", "data": "Hello, Server!"}
@@ -112,6 +113,7 @@ public static void main(String[] args) {
       Links             : {}
       ParsedHtml        : mshtml.HTMLDocumentClass
       RawContentLength  : 54
+   ```
 
 3. **Static File Request:**
    ```sh
