@@ -102,8 +102,8 @@ public static void main(String[] args) {
    curl http://localhost:8080/index.html
    ```
 
-      ![alt text](image-1.png)
-
+   
+      
       <!DOCTYPE html>
       <html lang="en">
       <head>
