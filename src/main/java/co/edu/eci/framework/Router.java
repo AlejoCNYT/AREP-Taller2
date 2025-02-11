@@ -8,44 +8,74 @@ import java.util.function.BiFunction;
 
 public class Router
 {
-    private Map<String, BiFunction<Request, co.edu.eci.framework.Response, String>> getRoutes = new HashMap<>();
-    private String staticFilesDirectory = "";
-    private Map<String, BiFunction<Request, Response, String>> postRoutes = new HashMap<>();
+    private static final Map<String, BiFunction<Request, Response, String>> getRoutes = new HashMap<>();
+    private static final Map<String, BiFunction<Request, Response, String>> postRoutes = new HashMap<>();
+    private static String staticFilesDirectory = "src/main/resources/webroot.public";
 
-    // Resgistrar una ruta POST
-    public void addPostRoute(String path, BiFunction<Request, Response, String> handler)
+    // Configurar el directorio para archivos estáticos
+    public static void staticfiles(String directory)
     {
-        postRoutes.put(path, handler);
-    }
-
-    private String jsonErrorResponse(int statusCode, String message)
-    {
-        return String.format("{\"status\": %d, \"error\": \"%s\"}", statusCode, message);
-    }
-
-    // Manejar solicitudes POST
-    public String handlePostRequest(String path, Request req, Response res) {
-        if (postRoutes.containsKey(path)) {
-            return postRoutes.get(path).apply(req, res);
-        }
-        res.setStatus(404);
-        return "File Not Found";
+        staticFilesDirectory = directory;
     }
 
     // Registrar una ruta GET
-    public void addGetRoute(String path, BiFunction<Request, co.edu.eci.framework.Response, String> handler)
+    public static void get(String path, BiFunction<Request, Response, String> handler)
     {
         getRoutes.put(path, handler);
     }
 
-    // Configurar el directorio para archivos estáticos
-    public void setStaticFilesDirectory(String directory)
+    // Registrar una ruta POST
+    public static void post(String path, BiFunction<Request, Response, String> handler)
     {
-        this.staticFilesDirectory = directory;
+        postRoutes.put(path, handler);
+    }
+
+    // Manejar una solicitud GET
+    public static String handleGetRequest(String path, Request req, Response res)
+    {
+        System.out.println("Handling GET request for path: " + path);
+
+        if (path == null || path.isEmpty())
+        {
+            res.setStatus(400);
+            return jsonErrorResponse(400, "Invalid request path");
+        }
+
+        // Si la ruta existe en las rutas GET, ejecutar su manejador
+        if (getRoutes.containsKey(path))
+        {
+            return getRoutes.get(path).apply(req, res);
+        }
+
+        // Intentar servir archivos estáticos
+        if (!staticFilesDirectory.isEmpty())
+        {
+            String filePath = path.startsWith("/") ? path.substring(1) : path;
+            serveStaticFile(filePath, res);
+            return res.formatResponse();
+        }
+
+        // Si no se encontró la ruta, responder con un 404
+        res.setStatus(404);
+        return jsonErrorResponse(404, "Resource Not Found");
+    }
+
+    // Manejar una solicitud POST
+    public static String handlePostRequest(String path, Request req, Response res)
+    {
+        System.out.println("Handling POST request for path: " + path);
+
+        if (postRoutes.containsKey(path))
+        {
+            return postRoutes.get(path).apply(req, res);
+        }
+        System.out.println("Route not found for POST: " + path);
+        res.setStatus(404);
+        return jsonErrorResponse(404, "Resource Not Found");
     }
 
     // Servir archivos estáticos
-    public void serveStaticFile(String path, Response res)
+    public static void serveStaticFile(String path, Response res)
     {
         try
         {
@@ -55,64 +85,37 @@ public class Router
             if (Files.exists(filePath) && !Files.isDirectory(filePath))
             {
                 String fileExtension = getFileExtension(filePath);
-                String contentType = getContenType(fileExtension);
+                String contentType = getContentType(fileExtension);
 
                 res.setHeader("Content-Type", contentType);
                 res.setBody(Files.readString(filePath));
                 res.setStatus(200);
-            } else
+            }
+            else
             {
                 System.out.println("File not found: " + filePath);
                 res.setStatus(404);
                 res.setBody("File Not Found");
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             res.setStatus(500);
             res.setBody("Internal Server Error");
         }
     }
 
-    private String getContenType(String fileExtension)
-    {
-
-        return fileExtension;
-    }
-
-    // Buscar y ejecutar el manejador para una ruta específica
-    public String handleGetRequest(String path, Request req, Response res) {
-        System.out.println("handling GET request for path: " + path);
-
-        if (getRoutes.containsKey(path))
-        {
-            return getRoutes.get(path).apply(req, res);
-        }
-
-        // Intentar servir archivos estáticos
-        if (!staticFilesDirectory.isEmpty())
-        {
-            serveStaticFile(path.substring(1), res);
-            return res.formatResponse();
-        }
-
-        if (!getRoutes.containsKey(path))
-        {
-            res.setStatus(404);
-            return jsonErrorResponse(404, "Resource Not Found");
-        }
-
-        res.setStatus(404);
-        return "Error 404: Resource Not Found";
-    }
-
-    private String getFileExtension(Path filePath)
+    // Obtener la extensión de un archivo
+    private static String getFileExtension(Path filePath)
     {
         String fileName = filePath.getFileName().toString();
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
+        return fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".") + 1) : "";
     }
 
-    private String getContentType(String extension)
+    // Obtener el tipo de contenido basado en la extensión del archivo
+    private static String getContentType(String extension)
     {
-        return  switch (extension)
+        return switch (extension)
         {
             case "html" -> "text/html";
             case "css" -> "text/css";
@@ -124,4 +127,9 @@ public class Router
         };
     }
 
+    // Respuesta de error en formato JSON
+    private static String jsonErrorResponse(int statusCode, String message)
+    {
+        return String.format("{\"status\": %d, \"error\": \"%s\"}", statusCode, message);
+    }
 }

@@ -6,41 +6,88 @@ import java.net.*;
 public class HttpServer
 {
     private int port;
-    private Router router = new Router();
-
+    private static Router router = new Router();
+    static Request req = new Request("");
+    static Response res = new Response();
+    static String responseBody = Router.handleGetRequest(req.getPath(), req, res);
     public HttpServer(int port)
     {
         this.port = port;
     }
 
-    public void start()
+    public static void start(int port) throws IOException
     {
-        try (ServerSocket serverSocket = new ServerSocket(port))
-        {
-            System.out.println("Server running on port " + port);
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Server started on port " + port);
 
             while (true)
             {
                 Socket clientSocket = serverSocket.accept();
                 handleRequest(clientSocket);
             }
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+
     }
 
-    private void handleRequest(Socket clientSocket)
+    private static void handleClient(Socket clientSocket) throws IOException
     {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true))
+        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        OutputStream out = clientSocket.getOutputStream();
+        PrintWriter writer = new PrintWriter(out, true);
+
+        String line;
+        String path = "";
+        while  (!(line = in.readLine()).isEmpty())
         {
+            if (line.startsWith("GET"))
+            {
+                path = line.split(" ")[1];
+            }
+        }
+
+        if (path.startsWith("/static/"))
+        {
+            String filePath = "src/main/sources/webroot.public" + path.replace("/static", "");
+            File file = new File(filePath);
+
+            if (!file.exists())
+            {
+                writer.println("HTTP/1.1 200 OK");
+                writer.println("Content-Type: text/html");
+                writer.println();
+
+                BufferedReader fileReader = new BufferedReader(new FileReader(file));
+                String fileLine;
+
+                while ((fileLine = fileReader.readLine()) != null)
+                {
+                    writer.println(fileLine);
+                }
+                fileReader.close();
+            } else
+            {
+                writer.println("HTTP/1.1 404 Not Found");
+                writer.println();
+            }
+        } else
+        {
+            String responseBody = Router.handleGetRequest(req.getPath(), req, res);
+
+            writer.println("HTTP/1.1 200 OK");
+            writer.println("Content-Type: text/plain");
+            writer.println();
+            writer.println(responseBody);
+        }
+
+    }
+
+    private static void handleRequest(Socket clientSocket) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             // Leer la primera línea de la solicitud HTTP
             String requestLine = in.readLine();
-            if (requestLine != null)
-            {
-                // System.out.println("Received request: " + requestLine);
+            if (requestLine != null) {
+                System.out.println("[INFO] Request: " + requestLine);
                 String[] parts = requestLine.split(" ");
                 if (parts.length < 2) return;
 
@@ -51,59 +98,42 @@ public class HttpServer
                 Response res = new Response();
                 String responseBody = "";
 
-                // Detectar y manejar POST:
-                if ("POST".equals(method))
-                {
-                    StringBuilder payload = new StringBuilder();
-                    String line;
-
-                    // Leer encabezados
-                    while (!(line = in.readLine()).isEmpty()) {
-                        System.out.println("[HEADER] " + line); // Agregar logging para depuración
-                        System.out.println("[DEBUG] Request Path: " + req.getPath());
-                        System.out.println("[DEBUG] Request Body: " + req.getBody());
-
+                // Leer encabezados
+                String line;
+                int contentLength = 0;
+                while (!(line = in.readLine()).isEmpty()) {
+                    if (line.startsWith("Content-Length:")) {
+                        contentLength = Integer.parseInt(line.split(":")[1].trim());
                     }
-
-                    // Leer el cuerpo de la solicitud
-                    while (in.ready()) {
-                        payload.append((char) in.read());
-                    }
-
-                    req.setBody(payload.toString()); // Verifica que el metodo setBody exista en Request
-
-                    responseBody = router.handlePostRequest(req.getPath(), req, res);
-                } else
-                {
-                    res.setStatus(404);
-                    responseBody = "{\"status\": 404, \"error\": \"Unsupported HTTP method\"}";
                 }
 
+                // Leer el cuerpo de la solicitud si es POST
+                if ("POST".equals(method) && contentLength > 0)
+                {
+                    char[] buffer = new char[contentLength];
+                    in.read(buffer);
+                    req.setBody(new String(buffer));
+                    System.out.println("[DEBUG] Handling POST for path: " + path);
 
-                if ("GET".equals(method))
-                {
-                    responseBody = router.handleGetRequest(req.getPath(), req, res);
-                } else
-                {
+                    responseBody = router.handlePostRequest(path, req, res);
+                } else if (method.equals("GET")) {
+                    responseBody = router.handleGetRequest(path, req, res);
+                } else {
                     res.setStatus(400);
-                    responseBody = "Unsupported HTTP method.";
+                    responseBody = "{\"status\": 400, \"error\": \"Unsupported HTTP method\"}";
                 }
 
-                // Responder con un mensaje simple
+                // Enviar respuesta
                 res.setBody(responseBody);
                 out.print(res.formatResponse());
                 out.flush();
             }
-        } catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
-        } finally
-        {
-            try
-            {
+        } finally {
+            try {
                 clientSocket.close();
-            } catch (IOException e)
-            {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
